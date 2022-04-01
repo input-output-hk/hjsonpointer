@@ -6,7 +6,6 @@ module Main where
 import           Data.Aeson
 import           Data.Bifunctor         (first)
 import           Data.Foldable
-import           Data.Monoid
 import           Data.Text              (Text)
 import qualified Data.Text              as T
 import           Data.Text.Encoding     (decodeUtf8, encodeUtf8)

@@ -10,7 +10,7 @@ category:           Data
 build-type:         Simple
 cabal-version:      >=1.10
 -- Rerun multi-ghc-travis (executable make-travis-yml-2) after changing:
-Tested-With:        GHC == 8.0.2, GHC == 8.2.2, GHC == 8.4.1
+Tested-With:        GHC == 8.10.7
 extra-source-files:
   changelog.md
   README.md
@@ -25,7 +25,7 @@ library
     JSONPointer
   build-depends:
       base                 >= 4.9 && < 5
-    , aeson                >= 0.7
+    , aeson                >= 1.5 && < 2.1
     , hashable             >= 1.2
     , unordered-containers >= 0.2
     , text                 >= 1.2

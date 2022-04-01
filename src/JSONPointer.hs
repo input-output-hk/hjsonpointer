@@ -1,3 +1,4 @@
+{-# LANGUAGE CPP                        #-}
 {-# LANGUAGE DeriveGeneric              #-}
 {-# LANGUAGE GeneralizedNewtypeDeriving #-}
 {-# LANGUAGE OverloadedStrings          #-}
@@ -5,15 +6,20 @@
 module JSONPointer where
 
 import           Control.Monad       (when)
-import           Data.Aeson
+import qualified Data.Aeson          as J
 import qualified Data.Hashable       as HA
-import qualified Data.HashMap.Strict as HM
-import           Data.Semigroup      (Semigroup)
 import           Data.Text           (Text)
 import qualified Data.Text           as T
 import qualified Data.Vector         as V
 import           GHC.Generics        (Generic)
 import           Text.Read           (readMaybe)
+
+#if MIN_VERSION_aeson(2,0,0)
+import qualified Data.Aeson.KeyMap as JM
+import qualified Data.Aeson.Key    as J
+#else
+import qualified Data.HashMap.Strict as JM
+#endif
 
 --------------------------------------------------
 -- * Resolution
@@ -26,7 +32,7 @@ data ResolutionError
     | ExpectedObjectOrArray
     deriving (Eq, Show)
 
-resolve :: Pointer -> Value -> Either ResolutionError Value
+resolve :: Pointer -> J.Value -> Either ResolutionError J.Value
 resolve (Pointer []) v     = Right v
 resolve (Pointer (t:ts)) v = resolveToken t v >>= resolve (Pointer ts)
 
@@ -40,14 +46,14 @@ newtype Pointer
 
 instance HA.Hashable Pointer
 
-instance FromJSON Pointer where
-    parseJSON = withText "JSON Pointer" $ \t ->
+instance J.FromJSON Pointer where
+    parseJSON = J.withText "JSON Pointer" $ \t ->
         case unescape t of
             Left e  -> fail (show e)
             Right p -> pure p
 
-instance ToJSON Pointer where
-    toJSON = String . escape
+instance J.ToJSON Pointer where
+    toJSON = J.String . escape
 
 -- | We don't try to distinguish between integer tokens and string
 -- tokens since all tokens start as strings, and all tokens can
@@ -153,8 +159,8 @@ unescapeToken t
 --
 -- Might also be useful for specialized applications that don't
 -- want to resolve an entire pointer at once.
-resolveToken :: Token -> Value -> Either ResolutionError Value
-resolveToken tok (Array vs) =
+resolveToken :: Token -> J.Value -> Either ResolutionError J.Value
+resolveToken tok (J.Array vs) =
     case readMaybe . T.unpack . _unToken $ tok of
         Nothing -> Left ArrayIndexInvalid
         Just n  -> do
@@ -162,8 +168,17 @@ resolveToken tok (Array vs) =
             case vs V.!? n of
                 Nothing  -> Left ArrayElemNotFound
                 Just res -> Right res
-resolveToken tok (Object h) =
-    case HM.lookup (_unToken tok) h of
+resolveToken tok (J.Object h) =
+    case JM.lookup (toKey (_unToken tok)) h of
         Nothing  -> Left ObjectLookupFailed
         Just res -> Right res
 resolveToken _ _ = Left ExpectedObjectOrArray
+
+
+#if MIN_VERSION_aeson(2,0,0)
+toKey :: Text -> J.Key
+toKey = J.fromText
+#else
+toKey :: Text -> Text
+toKey = id
+#endif
