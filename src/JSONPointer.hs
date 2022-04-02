@@ -1,25 +1,20 @@
-{-# LANGUAGE CPP                        #-}
 {-# LANGUAGE DeriveGeneric              #-}
 {-# LANGUAGE GeneralizedNewtypeDeriving #-}
 {-# LANGUAGE OverloadedStrings          #-}
 
 module JSONPointer where
 
-import           Control.Monad       (when)
-import qualified Data.Aeson          as J
-import qualified Data.Hashable       as HA
-import           Data.Text           (Text)
-import qualified Data.Text           as T
-import qualified Data.Vector         as V
-import           GHC.Generics        (Generic)
-import           Text.Read           (readMaybe)
+import           Control.Monad                      (when)
+import           Data.Text                          (Text)
+import           GHC.Generics                       (Generic)
+import           Text.Read                          (readMaybe)
 
-#if MIN_VERSION_aeson(2,0,0)
-import qualified Data.Aeson.KeyMap as JM
-import qualified Data.Aeson.Key    as J
-#else
-import qualified Data.HashMap.Strict as JM
-#endif
+import qualified Data.Aeson                         as J
+import qualified Data.Hashable                      as HA
+import qualified Data.Text                          as T
+import qualified Data.Vector                        as V
+import qualified HaskellWorks.Data.Aeson.Compat     as J
+import qualified HaskellWorks.Data.Aeson.Compat.Map as JM
 
 --------------------------------------------------
 -- * Resolution
@@ -169,16 +164,7 @@ resolveToken tok (J.Array vs) =
                 Nothing  -> Left ArrayElemNotFound
                 Just res -> Right res
 resolveToken tok (J.Object h) =
-    case JM.lookup (toKey (_unToken tok)) h of
+    case JM.lookup (J.textToKey (_unToken tok)) h of
         Nothing  -> Left ObjectLookupFailed
         Just res -> Right res
 resolveToken _ _ = Left ExpectedObjectOrArray
-
-
-#if MIN_VERSION_aeson(2,0,0)
-toKey :: Text -> J.Key
-toKey = J.fromText
-#else
-toKey :: Text -> Text
-toKey = id
-#endif
