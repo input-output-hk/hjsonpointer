@@ -25,9 +25,8 @@ library
     JSONPointer
   build-depends:
       base                 >= 4.9 && < 5
-    , aeson                >= 1.5 && < 2.1
+    , aeson                >= 2.1
     , hashable             >= 1.2
-    , hw-aeson             >= 0.1.3
     , text                 >= 1.2
     , unordered-containers >= 0.2
     , vector               >= 0.10

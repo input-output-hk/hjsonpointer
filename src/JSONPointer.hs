@@ -5,16 +5,17 @@
 module JSONPointer where
 
 import           Control.Monad                      (when)
+import           Data.Aeson.Key                     (fromText)
 import           Data.Text                          (Text)
+
 import           GHC.Generics                       (Generic)
 import           Text.Read                          (readMaybe)
 
 import qualified Data.Aeson                         as J
+import qualified Data.Aeson.KeyMap                  as KeyMap
 import qualified Data.Hashable                      as HA
 import qualified Data.Text                          as T
 import qualified Data.Vector                        as V
-import qualified HaskellWorks.Data.Aeson.Compat     as J
-import qualified HaskellWorks.Data.Aeson.Compat.Map as JM
 
 --------------------------------------------------
 -- * Resolution
@@ -164,7 +165,7 @@ resolveToken tok (J.Array vs) =
                 Nothing  -> Left ArrayElemNotFound
                 Just res -> Right res
 resolveToken tok (J.Object h) =
-    case JM.lookup (J.textToKey (_unToken tok)) h of
+    case KeyMap.lookup (fromText (_unToken tok)) h of
         Nothing  -> Left ObjectLookupFailed
         Just res -> Right res
 resolveToken _ _ = Left ExpectedObjectOrArray
